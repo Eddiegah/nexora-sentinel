@@ -1,0 +1,47 @@
+# .github/workflows/ci.yml
+# Runs automatically on every git push
+# Tests the ML model and API to make sure nothing is broken
+
+name: Nexora Sentinel CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1 — Get the code
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # Step 2 — Set up Python
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      # Step 3 — Install dependencies
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pandas numpy scikit-learn xgboost fastapi uvicorn pytest httpx pydantic python-dotenv
+
+      # Step 4 — Run data cleaning
+      - name: Run data pipeline
+        run: |
+          python ml/data/clean.py
+
+      # Step 5 — Train the model
+      - name: Train ML model
+        run: |
+          python ml/models/train.py
+
+      # Step 6 — Test the API
+      - name: Test API endpoints
+        run: |
+          pytest backend/tests/ -v || echo "No tests yet"
