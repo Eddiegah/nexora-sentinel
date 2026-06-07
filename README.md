@@ -6,11 +6,15 @@ Predict outbreaks before they become emergencies.
 
 "Every outbreak that kills thousands begins as a signal nobody acted on. Nexora Sentinel turns those signals into action."
 
-<br>"Python" (https://img.shields.io/badge/Python-3.14-3776AB?style=for-the-badge&logo=python&logoColor=white)
-"FastAPI" (https://img.shields.io/badge/FastAPI-Backend-009688?style=for-the-badge&logo=fastapi&logoColor=white)
-"React" (https://img.shields.io/badge/React-Dashboard-61DAFB?style=for-the-badge&logo=react&logoColor=black)
-"XGBoost" (https://img.shields.io/badge/XGBoost-96.36%25_Accuracy-FF6600?style=for-the-badge)
-"Status" (https://img.shields.io/badge/Status-Live-22c55e?style=for-the-badge)
+<div align="center">
+
+![Python](https://img.shields.io/badge/Python-3.14-3776AB?style=for-the-badge&logo=python&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-Backend-009688?style=for-the-badge&logo=fastapi&logoColor=white)
+![React](https://img.shields.io/badge/React-Dashboard-61DAFB?style=for-the-badge&logo=react&logoColor=black)
+![XGBoost](https://img.shields.io/badge/XGBoost-96.36%25_Accuracy-FF6600?style=for-the-badge)
+![Status](https://img.shields.io/badge/Status-Live-22c55e?style=for-the-badge)
+
+</div>
 
 <br>Built with purpose. Trained on truth. Designed for Africa.
 
