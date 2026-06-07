@@ -1,0 +1,23 @@
+artifact_path: file:C:/Users/gahed/Documents/nexora-sentinel/mlruns/1/models/m-6d7fbf147c3543c3b08fc12726b26aa0/artifacts
+flavors:
+  python_function:
+    env:
+      conda: conda.yaml
+      virtualenv: python_env.yaml
+    loader_module: mlflow.sklearn
+    model_path: model.pkl
+    predict_fn: predict
+    python_version: 3.14.4
+  sklearn:
+    code: null
+    pickled_model: model.pkl
+    serialization_format: cloudpickle
+    sklearn_version: 1.9.0
+    skops_trusted_types: null
+mlflow_version: 3.13.0
+model_id: m-6d7fbf147c3543c3b08fc12726b26aa0
+model_size_bytes: 1030
+model_uuid: m-6d7fbf147c3543c3b08fc12726b26aa0
+prompts: null
+run_id: 4761c30b22e84da4bf34e7343452387d
+utc_time_created: '2026-06-07 20:55:18.232431'

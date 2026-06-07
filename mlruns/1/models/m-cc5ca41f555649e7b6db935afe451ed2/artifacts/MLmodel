@@ -1,0 +1,22 @@
+artifact_path: file:C:/Users/gahed/Documents/nexora-sentinel/mlruns/1/models/m-cc5ca41f555649e7b6db935afe451ed2/artifacts
+flavors:
+  python_function:
+    data: model.ubj
+    env:
+      conda: conda.yaml
+      virtualenv: python_env.yaml
+    loader_module: mlflow.xgboost
+    python_version: 3.14.4
+  xgboost:
+    code: null
+    data: model.ubj
+    model_class: xgboost.sklearn.XGBClassifier
+    model_format: ubj
+    xgb_version: 3.2.0
+mlflow_version: 3.13.0
+model_id: m-cc5ca41f555649e7b6db935afe451ed2
+model_size_bytes: 878583
+model_uuid: m-cc5ca41f555649e7b6db935afe451ed2
+prompts: null
+run_id: 186cca09a7174272897aa2c9bc3174d0
+utc_time_created: '2026-06-07 20:55:48.242189'
