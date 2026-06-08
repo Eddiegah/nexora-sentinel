@@ -1,17 +1,11 @@
-// frontend/src/App.js
-// This is the main dashboard for Nexora Sentinel
-
 import { useState, useEffect } from "react";
 
-// ── STYLES ────────────────────────────────────────────────────────
 const styles = {
   app: {
     fontFamily: "'Segoe UI', sans-serif",
     backgroundColor: "#0f172a",
     minHeight: "100vh",
     color: "#f1f5f9",
-    padding: "0",
-    margin: "0",
   },
   header: {
     backgroundColor: "#1e293b",
@@ -81,6 +75,19 @@ const styles = {
     fontWeight: "700",
     cursor: "pointer",
     width: "100%",
+    marginBottom: "8px",
+  },
+  buttonSecondary: {
+    backgroundColor: "#334155",
+    color: "#f1f5f9",
+    border: "none",
+    borderRadius: "8px",
+    padding: "12px 28px",
+    fontSize: "15px",
+    fontWeight: "700",
+    cursor: "pointer",
+    width: "100%",
+    marginBottom: "8px",
   },
   riskCard: (color) => ({
     backgroundColor: "#0f172a",
@@ -96,15 +103,24 @@ const styles = {
     color: color,
     margin: "0",
   }),
-  riskMessage: {
+  reportBox: {
+    backgroundColor: "#0f172a",
+    border: "1px solid #334155",
+    borderRadius: "12px",
+    padding: "20px",
+    marginTop: "16px",
+    lineHeight: "1.7",
     fontSize: "14px",
-    color: "#94a3b8",
-    marginTop: "8px",
+    color: "#cbd5e1",
+    whiteSpace: "pre-wrap",
   },
-  confidence: {
+  reportTitle: {
     fontSize: "13px",
-    color: "#64748b",
-    marginTop: "4px",
+    fontWeight: "600",
+    color: "#38bdf8",
+    marginBottom: "12px",
+    textTransform: "uppercase",
+    letterSpacing: "0.05em",
   },
   table: {
     width: "100%",
@@ -131,11 +147,6 @@ const styles = {
     backgroundColor: color,
     marginRight: "8px",
   }),
-  loading: {
-    color: "#64748b",
-    textAlign: "center",
-    padding: "20px",
-  },
   grid: {
     display: "grid",
     gridTemplateColumns: "1fr 1fr 1fr",
@@ -161,19 +172,19 @@ const styles = {
   },
 };
 
-// ── MAIN APP COMPONENT ────────────────────────────────────────────
 export default function App() {
   const [countries, setCountries] = useState([]);
   const [selectedCountry, setSelectedCountry] = useState("Ghana");
   const [selectedYear, setSelectedYear] = useState(2024);
   const [prediction, setPrediction] = useState(null);
+  const [report, setReport] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [loadingReport, setLoadingReport] = useState(false);
   const [allPredictions, setAllPredictions] = useState([]);
   const [loadingAll, setLoadingAll] = useState(false);
 
- const API = "http://34.201.137.167:8000";
+const API = "http://34.201.137.167:8000";
 
-  // Load countries when app starts
   useEffect(() => {
     fetch(`${API}/countries`)
       .then((res) => res.json())
@@ -181,9 +192,9 @@ export default function App() {
       .catch(() => setCountries(["Ghana", "Nigeria", "Kenya"]));
   }, []);
 
-  // Get prediction for selected country
   const getPrediction = async () => {
     setLoading(true);
+    setReport(null);
     setPrediction(null);
     try {
       const res = await fetch(`${API}/predict`, {
@@ -207,7 +218,28 @@ export default function App() {
     setLoading(false);
   };
 
-  // Load predictions for top countries
+  const getReport = async () => {
+    if (!prediction || prediction.error) return;
+    setLoadingReport(true);
+    try {
+      const res = await fetch(`${API}/report`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          country: prediction.country,
+          year: prediction.year,
+          risk_level: prediction.risk_level,
+          confidence: prediction.confidence,
+        }),
+      });
+      const data = await res.json();
+      setReport(data);
+    } catch (err) {
+      setReport({ error: "Could not generate report" });
+    }
+    setLoadingReport(false);
+  };
+
   const loadAllPredictions = async () => {
     setLoadingAll(true);
     const topCountries = [
@@ -240,15 +272,12 @@ export default function App() {
   };
 
   const years = Array.from({ length: 10 }, (_, i) => 2020 + i);
-
-  // Count risk levels
   const highCount = allPredictions.filter(p => p.risk_level === "High").length;
   const medCount = allPredictions.filter(p => p.risk_level === "Medium").length;
   const lowCount = allPredictions.filter(p => p.risk_level === "Low").length;
 
   return (
     <div style={styles.app}>
-      {/* HEADER */}
       <div style={styles.header}>
         <div>
           <p style={styles.headerTitle}>🛡️ Nexora Sentinel</p>
@@ -260,7 +289,6 @@ export default function App() {
       </div>
 
       <div style={styles.main}>
-        {/* PREDICTION PANEL */}
         <div style={styles.card}>
           <p style={styles.cardTitle}>🔍 Predict Outbreak Risk</p>
           <select
@@ -285,21 +313,43 @@ export default function App() {
             {loading ? "Predicting..." : "Run Prediction"}
           </button>
 
-          {/* PREDICTION RESULT */}
           {prediction && !prediction.error && (
-            <div style={styles.riskCard(prediction.color)}>
-              <p style={{ color: "#94a3b8", margin: "0 0 8px 0", fontSize: "14px" }}>
-                {prediction.country} — {prediction.year}
-              </p>
-              <p style={styles.riskLevel(prediction.color)}>
-                {prediction.risk_level}
-              </p>
-              <p style={styles.riskMessage}>Malaria Outbreak Risk</p>
-              <p style={styles.confidence}>
-                Model confidence: {prediction.confidence}%
-              </p>
-            </div>
+            <>
+              <div style={styles.riskCard(prediction.color)}>
+                <p style={{ color: "#94a3b8", margin: "0 0 8px 0", fontSize: "14px" }}>
+                  {prediction.country} — {prediction.year}
+                </p>
+                <p style={styles.riskLevel(prediction.color)}>
+                  {prediction.risk_level}
+                </p>
+                <p style={{ color: "#94a3b8", marginTop: "4px" }}>
+                  Malaria Outbreak Risk
+                </p>
+                <p style={{ color: "#64748b", fontSize: "13px" }}>
+                  Model confidence: {prediction.confidence}%
+                </p>
+              </div>
+
+              <button
+                style={{ ...styles.buttonSecondary, marginTop: "12px" }}
+                onClick={getReport}
+              >
+                {loadingReport
+                  ? "Generating AI Report..."
+                  : "🧠 Generate AI Health Report"}
+              </button>
+
+              {report && !report.error && (
+                <div style={styles.reportBox}>
+                  <p style={styles.reportTitle}>
+                    AI Health Intelligence Report — Powered by Claude
+                  </p>
+                  {report.report}
+                </div>
+              )}
+            </>
           )}
+
           {prediction?.error && (
             <p style={{ color: "#ef4444", marginTop: "12px" }}>
               {prediction.error}
@@ -307,14 +357,12 @@ export default function App() {
           )}
         </div>
 
-        {/* MULTI-COUNTRY TABLE */}
         <div style={styles.card}>
           <p style={styles.cardTitle}>🌍 Regional Risk Overview</p>
           <button style={styles.button} onClick={loadAllPredictions}>
             {loadingAll ? "Loading predictions..." : "Load Top 15 Countries"}
           </button>
 
-          {/* STATS */}
           {allPredictions.length > 0 && (
             <>
               <div style={{ ...styles.grid, marginTop: "20px" }}>
@@ -338,7 +386,6 @@ export default function App() {
                 </div>
               </div>
 
-              {/* TABLE */}
               <table style={styles.table}>
                 <thead>
                   <tr>
