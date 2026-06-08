@@ -171,7 +171,7 @@ export default function App() {
   const [allPredictions, setAllPredictions] = useState([]);
   const [loadingAll, setLoadingAll] = useState(false);
 
-  const API = "http://127.0.0.1:8000";
+ const API = "http://34.201.137.167:8000";
 
   // Load countries when app starts
   useEffect(() => {
