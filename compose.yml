@@ -1,39 +1,46 @@
-# docker-compose.yml
-# Runs the entire Nexora Sentinel stack with one command
-# Usage: docker-compose up
-
 version: '3.8'
 
 services:
+  db:
+    image: postgres:15
+    container_name: nexora-db
+    environment:
+      POSTGRES_DB: nexora
+      POSTGRES_USER: nexora_user
+      POSTGRES_PASSWORD: nexora_pass
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
 
-  # ── BACKEND API ─────────────────────────────────────────────────
   backend:
     build:
       context: .
       dockerfile: backend/Dockerfile
     container_name: nexora-backend
     ports:
-      - "8000:8000"        # Map container port 8000 to host port 8000
+      - "8000:8000"
     volumes:
-      - ./data:/app/data          # Share data folder with container
-      - ./ml:/app/ml              # Share ml folder with container
+      - ./data:/app/data
+      - ./ml:/app/ml
     environment:
       - PYTHONUNBUFFERED=1
+      - DATABASE_URL=postgresql://nexora_user:nexora_pass@db:5432/nexora
+    env_file:
+      - .env
+    depends_on:
+      - db
     restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
 
-  # ── FRONTEND DASHBOARD ──────────────────────────────────────────
   frontend:
     build:
       context: .
       dockerfile: frontend/Dockerfile
     container_name: nexora-frontend
     ports:
-      - "3000:80"          # Map container port 80 to host port 3000
+      - "3000:80"
     depends_on:
-      - backend            # Wait for backend to start first
+      - backend
     restart: unless-stopped
+
+volumes:
+  postgres_data:

@@ -7,7 +7,30 @@ import pandas as pd
 import os
 import anthropic
 from dotenv import load_dotenv
+import psycopg2
+from datetime import datetime
+# Database setup
+def get_db_connection():
+    return psycopg2.connect(os.environ.get("DATABASE_URL"))
 
+def init_db():
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS predictions (
+            id SERIAL PRIMARY KEY,
+            country VARCHAR(100),
+            year INTEGER,
+            risk_level VARCHAR(50),
+            confidence FLOAT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+    conn.commit()
+    cur.close()
+    conn.close()
+
+init_db()
 load_dotenv()
 
 app = FastAPI(
@@ -113,6 +136,19 @@ def predict(request: PredictionRequest):
         "Medium": "#f59e0b",
         "High": "#ef4444"
     }
+    # Save to database
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute(
+            "INSERT INTO predictions (country, year, risk_level, confidence) VALUES (%s, %s, %s, %s)",
+            (request.country, request.year, prediction, round(confidence * 100, 1))
+        )
+        conn.commit()
+        cur.close()
+        conn.close()
+    except Exception as e:
+        print(f"DB save error: {e}")
     return {
         "country": request.country,
         "year": request.year,
@@ -168,4 +204,29 @@ Keep the report under 200 words. Write in professional paragraphs, no bullet poi
         return {
             "error": str(e),
             "report": "Report generation failed. Please try again."
+            @app.get("/history")
+def get_history():
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute(
+            "SELECT country, year, risk_level, confidence, created_at FROM predictions ORDER BY created_at DESC LIMIT 20"
+        )
+        rows = cur.fetchall()
+        cur.close()
+        conn.close()
+        return {
+            "history": [
+                {
+                    "country": row[0],
+                    "year": row[1],
+                    "risk_level": row[2],
+                    "confidence": row[3],
+                    "created_at": str(row[4])
+                }
+                for row in rows
+            ]
+        }
+    except Exception as e:
+        return {"error": str(e), "history": []}
         }

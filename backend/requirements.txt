@@ -8,3 +8,5 @@ scikit-learn
 xgboost
 shap
 httpx==0.27.0
+anthropic
+psycopg2-binary
