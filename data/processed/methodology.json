@@ -1,0 +1,47 @@
+{
+  "target_variable": {
+    "source": "WHO Global Health Observatory",
+    "indicator_code": "MALARIA_EST_INCIDENCE",
+    "indicator_name": "Estimated malaria incidence (per 1,000 population at risk)",
+    "url": "https://ghoapi.azureedge.net/api/MALARIA_EST_INCIDENCE"
+  },
+  "features": {
+    "urban_population_pct": {
+      "source": "World Bank Open Data",
+      "indicator_code": "SP.URB.TOTL.IN.ZS"
+    },
+    "rural_population_pct": {
+      "source": "World Bank Open Data",
+      "indicator_code": "SP.RUR.TOTL.ZS"
+    },
+    "urban_growth_pct": {
+      "source": "World Bank Open Data",
+      "indicator_code": "SP.URB.GROW"
+    },
+    "population_growth_pct": {
+      "source": "World Bank Open Data",
+      "indicator_code": "SP.POP.GROW"
+    },
+    "water_access_pct": {
+      "source": "World Bank Open Data",
+      "indicator_code": "SH.H2O.BASW.ZS"
+    },
+    "sanitation_access_pct": {
+      "source": "World Bank Open Data",
+      "indicator_code": "SH.STA.BASS.ZS"
+    }
+  },
+  "risk_label_methodology": {
+    "method": "tertile binning of malaria_incidence within this dataset",
+    "low_upper_bound": 111.97349469999993,
+    "medium_upper_bound": 312.5155573666666,
+    "note": "There is no single official WHO 3-tier risk classification; these cutpoints are computed from this dataset's own distribution and are fully reproducible by re-running build_dataset.py."
+  },
+  "countries": 45,
+  "year_range": [
+    2000,
+    2024
+  ],
+  "records_after_join_and_cleaning": 1101,
+  "records_dropped_missing_features": 0
+}

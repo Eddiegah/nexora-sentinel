@@ -1,0 +1,38 @@
+# Secrets -- never committed, no exceptions
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*credentials*
+*secret*
+
+# Python
+venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Node / frontend
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+node_modules/
+.next/
+npm-debug.log*
+
+# Data cache (large, regenerable from the collection script -- not secrets,
+# just not worth bloating the repo with raw API dumps)
+data/raw/*.json
+data/raw/*.csv
+
+# MLflow / experiment tracking runs (local only)
+mlruns/
+mlflow.db
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.log

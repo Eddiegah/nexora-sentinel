@@ -1,0 +1,45 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: nexora
+      POSTGRES_PASSWORD: nexora
+      POSTGRES_DB: nexora_sentinel
+    ports:
+      - "5432:5432"
+    volumes:
+      - nexora_pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nexora -d nexora_sentinel"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    environment:
+      DATABASE_URL: postgresql://nexora:nexora@postgres:5432/nexora_sentinel
+      CORS_ORIGINS: http://localhost:3000
+      ML_ARTIFACTS_DIR: /app/ml/artifacts
+      PROCESSED_DATA_CSV: /app/data/processed/malaria_africa.csv
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: http://localhost:8000
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+
+volumes:
+  nexora_pg_data:
