@@ -32,6 +32,9 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+# NEXT_PUBLIC_API_URL only -- not a secret, committed so Vercel deploys
+# need zero manual env var configuration
+!.env.production
 
 # vercel
 .vercel

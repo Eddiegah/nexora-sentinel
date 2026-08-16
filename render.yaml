@@ -1,0 +1,25 @@
+databases:
+  - name: nexora-sentinel-db
+    databaseName: nexora_sentinel
+    user: nexora
+    plan: free
+
+services:
+  - type: web
+    name: nexora-sentinel-backend
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: .
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: nexora-sentinel-db
+          property: connectionString
+      - key: CORS_ORIGINS
+        value: http://localhost:3000
+      - key: ML_ARTIFACTS_DIR
+        value: /app/ml/artifacts
+      - key: PROCESSED_DATA_CSV
+        value: /app/data/processed/malaria_africa.csv

@@ -36,6 +36,11 @@ app = FastAPI(title="Nexora Sentinel API", version="1.0.0", lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=CORS_ORIGINS,
+    # Vercel assigns a new preview URL per deploy/branch, so an exact-match
+    # allowlist would need updating on every deploy. This is a public demo
+    # API with no cookies/auth, so allowing any vercel.app subdomain is a
+    # reasonable tradeoff.
+    allow_origin_regex=r"https://.*\.vercel\.app",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

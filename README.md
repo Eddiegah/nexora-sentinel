@@ -90,6 +90,30 @@ npm run dev
 
 The backend works without a database configured — `/predict` still returns predictions, it just skips writing to history and `/health` reports `db_connected: false`. To enable history, copy `backend/.env.example` to `backend/.env` and point `DATABASE_URL` at a running Postgres instance.
 
+### Option C: Deploy your own copy (Render + Vercel, both free)
+
+This is how to get a public URL you can share. Both platforms deploy straight from this GitHub repo — no local build step needed.
+
+**1. Backend + database, on Render**
+
+- Sign in to [Render](https://render.com) with GitHub.
+- **New +** → **Blueprint** → select this repo. Render reads [`render.yaml`](render.yaml) and provisions a free web service (`nexora-sentinel-backend`) and a free Postgres database automatically.
+- Click **Apply**. First build takes a few minutes.
+- Once live, confirm at `https://nexora-sentinel-backend.onrender.com/health` — expect `{"status":"ok","model_loaded":true,"db_connected":true}`.
+- If Render assigned a different URL (the exact name can be taken), note it — you'll need it in step 2.
+
+**2. Frontend, on Vercel**
+
+- Sign in to [Vercel](https://vercel.com) with GitHub.
+- **Add New** → **Project** → import this repo.
+- Set **Root Directory** to `frontend` (the one manual setting required).
+- Deploy. `frontend/.env.production` already points at `https://nexora-sentinel-backend.onrender.com`, so no environment variables are needed *unless* Render gave you a different URL — in that case, add `NEXT_PUBLIC_API_URL` under Project Settings → Environment Variables and redeploy.
+- Your shareable link is the `https://<project>.vercel.app` URL Vercel gives you.
+
+**Known free-tier tradeoffs** (worth knowing before you share the link):
+- Render's free web service spins down after 15 minutes of no traffic and takes about a minute to wake up — the first request after a quiet period will be slow, not broken.
+- Render's free Postgres database expires 30 days after creation (14-day grace period after that before deletion). The app still works fine without a database — predictions just won't persist to `/history`. Recreate the database blueprint if you want history back after expiry.
+
 ## API
 
 | Endpoint | Method | Description |
