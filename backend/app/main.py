@@ -1,10 +1,11 @@
-from __future__ import annotations
-
 import logging
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from slowapi.util import get_remote_address
 
 from app import data_lookup, database, ml_model
 from app.config import CORS_ORIGINS
@@ -12,11 +13,15 @@ from app.schemas import (
     CountryOut,
     HealthResponse,
     HistoryRecord,
+    OverviewEntry,
     PredictRequest,
     PredictResponse,
+    TrendPoint,
 )
 
 logger = logging.getLogger("nexora")
+
+limiter = Limiter(key_func=get_remote_address)
 
 
 @asynccontextmanager
@@ -32,6 +37,9 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="Nexora Sentinel API", version="1.0.0", lifespan=lifespan)
+
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 app.add_middleware(
     CORSMiddleware,
@@ -62,7 +70,8 @@ def countries():
 
 
 @app.post("/predict", response_model=PredictResponse)
-def predict(req: PredictRequest):
+@limiter.limit("30/minute")
+def predict(request: Request, req: PredictRequest):
     try:
         real_features, data_year_used = data_lookup.lookup_features(req.country_iso3, req.year)
     except ValueError as e:
@@ -113,3 +122,54 @@ def predict(req: PredictRequest):
 @app.get("/history", response_model=list[HistoryRecord])
 def history(limit: int = 50):
     return database.fetch_history(limit=limit)
+
+
+@app.get("/overview", response_model=list[OverviewEntry])
+@limiter.limit("10/minute")
+def overview(request: Request, year: int = 2024):
+    """Predictions for every country's nearest-available year to `year`,
+    in one call -- real recorded data, no what-if overrides, not persisted
+    to history (this is a bulk dashboard view, not a user prediction)."""
+    if not ml_model.is_loaded():
+        raise HTTPException(status_code=503, detail="Model artifacts are not loaded")
+
+    out = []
+    for c in data_lookup.list_countries():
+        try:
+            features, data_year_used = data_lookup.lookup_features(c["iso3"], year)
+            result = ml_model.predict(c["iso3"], data_year_used, features)
+        except ValueError:
+            continue
+        out.append(OverviewEntry(
+            country_iso3=c["iso3"],
+            country_name=c["name"],
+            year=data_year_used,
+            predicted_risk=result["predicted_risk"],
+            probabilities=result["probabilities"],
+        ))
+    return out
+
+
+@app.get("/trend", response_model=list[TrendPoint])
+@limiter.limit("30/minute")
+def trend(request: Request, country_iso3: str):
+    """Predicted risk for every year of real recorded data available for
+    one country -- shows how risk has evolved 2000-2024, not persisted to
+    history."""
+    if not ml_model.is_loaded():
+        raise HTTPException(status_code=503, detail="Model artifacts are not loaded")
+
+    matches = [c for c in data_lookup.list_countries() if c["iso3"] == country_iso3]
+    if not matches:
+        raise HTTPException(status_code=404, detail=f"No data available for country '{country_iso3}'")
+
+    out = []
+    for year in matches[0]["years_available"]:
+        features, data_year_used = data_lookup.lookup_features(country_iso3, year)
+        result = ml_model.predict(country_iso3, data_year_used, features)
+        out.append(TrendPoint(
+            year=data_year_used,
+            predicted_risk=result["predicted_risk"],
+            probabilities=result["probabilities"],
+        ))
+    return out

@@ -1,0 +1,20 @@
+name: Keep backend warm
+
+on:
+  schedule:
+    # Every 10 minutes -- comfortably under Render's 15-minute free-tier
+    # idle spin-down, so the backend never cold-starts for a visitor.
+    - cron: "*/10 * * * *"
+  workflow_dispatch: {}
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping backend health endpoint
+        run: |
+          status=$(curl -s -o /dev/null -w "%{http_code}" --max-time 30 https://nexora-sentinel-backend.onrender.com/health)
+          echo "Health check returned HTTP $status"
+          if [ "$status" != "200" ]; then
+            echo "::warning::Backend health check did not return 200 (got $status) -- may be cold-starting or down."
+          fi

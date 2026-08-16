@@ -14,6 +14,8 @@ class PredictRequest(BaseModel):
     population_growth_pct: float | None = None
     water_access_pct: float | None = None
     sanitation_access_pct: float | None = None
+    avg_precipitation_mm_day: float | None = None
+    avg_temperature_c: float | None = None
 
 
 class PredictResponse(BaseModel):
@@ -50,3 +52,17 @@ class HealthResponse(BaseModel):
     status: str
     model_loaded: bool
     db_connected: bool
+
+
+class OverviewEntry(BaseModel):
+    country_iso3: str
+    country_name: str
+    year: int
+    predicted_risk: str
+    probabilities: dict[str, float]
+
+
+class TrendPoint(BaseModel):
+    year: int
+    predicted_risk: str
+    probabilities: dict[str, float]

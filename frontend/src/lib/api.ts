@@ -2,8 +2,10 @@ import type {
   Country,
   HealthResponse,
   HistoryRecord,
+  OverviewEntry,
   PredictRequest,
   PredictResponse,
+  TrendPoint,
 } from "./types";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
@@ -26,4 +28,6 @@ export const api = {
   getHistory: (limit = 20) => request<HistoryRecord[]>(`/history?limit=${limit}`),
   predict: (body: PredictRequest) =>
     request<PredictResponse>("/predict", { method: "POST", body: JSON.stringify(body) }),
+  getOverview: (year = 2024) => request<OverviewEntry[]>(`/overview?year=${year}`),
+  getTrend: (countryIso3: string) => request<TrendPoint[]>(`/trend?country_iso3=${countryIso3}`),
 };

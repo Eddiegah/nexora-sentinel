@@ -10,6 +10,8 @@ const OVERRIDE_FIELDS: { key: keyof PredictRequest; label: string }[] = [
   { key: "population_growth_pct", label: "Population growth (%/yr)" },
   { key: "water_access_pct", label: "Basic water access (%)" },
   { key: "sanitation_access_pct", label: "Basic sanitation access (%)" },
+  { key: "avg_precipitation_mm_day", label: "Avg precipitation (mm/day)" },
+  { key: "avg_temperature_c", label: "Avg temperature (°C)" },
 ];
 
 export default function PredictionForm({

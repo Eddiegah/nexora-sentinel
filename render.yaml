@@ -1,9 +1,3 @@
-databases:
-  - name: nexora-sentinel-db
-    databaseName: nexora_sentinel
-    user: nexora
-    plan: free
-
 services:
   - type: web
     name: nexora-sentinel-backend
@@ -13,10 +7,13 @@ services:
     plan: free
     healthCheckPath: /health
     envVars:
+      # Points at an external, non-expiring Postgres (e.g. Neon's free
+      # tier) instead of Render's own free Postgres, which auto-deletes
+      # 30 days after creation. Set this manually in the Render dashboard
+      # (Environment tab) -- sync: false means Blueprint syncs never
+      # overwrite it.
       - key: DATABASE_URL
-        fromDatabase:
-          name: nexora-sentinel-db
-          property: connectionString
+        sync: false
       - key: CORS_ORIGINS
         value: http://localhost:3000
       - key: ML_ARTIFACTS_DIR

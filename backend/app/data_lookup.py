@@ -14,6 +14,7 @@ FEATURE_COLS = [
     "urban_population_pct", "rural_population_pct",
     "urban_growth_pct", "population_growth_pct",
     "water_access_pct", "sanitation_access_pct",
+    "avg_precipitation_mm_day", "avg_temperature_c",
 ]
 
 _df: pd.DataFrame | None = None

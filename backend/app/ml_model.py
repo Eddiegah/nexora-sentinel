@@ -15,6 +15,7 @@ FEATURE_COLS = [
     "urban_population_pct", "rural_population_pct",
     "urban_growth_pct", "population_growth_pct",
     "water_access_pct", "sanitation_access_pct",
+    "avg_precipitation_mm_day", "avg_temperature_c",
 ]
 
 _model = None
@@ -47,7 +48,7 @@ def known_countries() -> set[str]:
 
 
 def predict(country_iso3: str, year: int, features: dict) -> dict:
-    """features must contain exactly the 6 non-country/year feature cols."""
+    """features must contain exactly the 8 non-country/year feature cols."""
     if _model is None:
         raise RuntimeError("Model artifacts are not loaded")
     if country_iso3 not in _le_country.classes_:

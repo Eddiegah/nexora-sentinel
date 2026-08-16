@@ -17,6 +17,8 @@ const FEATURE_LABELS: Record<string, string> = {
   population_growth_pct: "Population growth %",
   water_access_pct: "Water access %",
   sanitation_access_pct: "Sanitation access %",
+  avg_precipitation_mm_day: "Precipitation (mm/day)",
+  avg_temperature_c: "Temperature (°C)",
 };
 
 export default function PredictionResult({ result }: { result: PredictResponse }) {

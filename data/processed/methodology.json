@@ -29,6 +29,16 @@
     "sanitation_access_pct": {
       "source": "World Bank Open Data",
       "indicator_code": "SH.STA.BASS.ZS"
+    },
+    "avg_precipitation_mm_day": {
+      "source": "NASA POWER",
+      "parameter_code": "PRECTOTCORR",
+      "note": "Queried at each country's capital-city coordinates (see country_coords.py) as a representative point, not averaged across the whole country -- disclosed simplification, not hidden."
+    },
+    "avg_temperature_c": {
+      "source": "NASA POWER",
+      "parameter_code": "T2M",
+      "note": "Queried at each country's capital-city coordinates (see country_coords.py) as a representative point, not averaged across the whole country -- disclosed simplification, not hidden."
     }
   },
   "risk_label_methodology": {

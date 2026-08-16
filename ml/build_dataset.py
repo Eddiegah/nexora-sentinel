@@ -21,10 +21,16 @@ from pathlib import Path
 import pandas as pd
 
 from countries import AFRICAN_COUNTRIES
+from country_coords import CAPITAL_COORDS
 from collect_data import WORLD_BANK_INDICATORS, RAW_DIR
 
 PROCESSED_DIR = Path(__file__).resolve().parents[1] / "data" / "processed"
 PROCESSED_DIR.mkdir(parents=True, exist_ok=True)
+
+CLIMATE_FEATURES = {
+    "PRECTOTCORR": "avg_precipitation_mm_day",
+    "T2M": "avg_temperature_c",
+}
 
 
 def load_malaria() -> pd.DataFrame:
@@ -44,6 +50,26 @@ def load_world_bank_indicator(code: str, feature_name: str) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
+def load_climate() -> pd.DataFrame:
+    """NASA POWER annual values are keyed 'YYYY13' (13 = annual aggregate)."""
+    rows = []
+    for iso3 in CAPITAL_COORDS:
+        cache_path = RAW_DIR / f"climate_{iso3}.json"
+        if not cache_path.exists():
+            continue
+        params = json.loads(cache_path.read_text())["properties"]["parameter"]
+        years = {int(k[:4]) for k in params["T2M"] if k.endswith("13")}
+        for year in years:
+            key = f"{year}13"
+            rows.append({
+                "country_iso3": iso3,
+                "year": year,
+                "avg_precipitation_mm_day": params["PRECTOTCORR"].get(key),
+                "avg_temperature_c": params["T2M"].get(key),
+            })
+    return pd.DataFrame(rows)
+
+
 def build() -> tuple[pd.DataFrame, dict]:
     malaria = load_malaria()
 
@@ -52,12 +78,16 @@ def build() -> tuple[pd.DataFrame, dict]:
         indicator_df = load_world_bank_indicator(code, name)
         features = indicator_df if features is None else features.merge(indicator_df, on=["country_iso3", "year"], how="outer")
 
+    climate = load_climate()
+    features = features.merge(climate, on=["country_iso3", "year"], how="outer")
+
     df = malaria.merge(features, on=["country_iso3", "year"], how="inner")
 
-    # Per-country linear interpolation for small gaps in the World Bank
-    # indicators (they're slowly-changing demographic series, so this is a
-    # defensible fill -- NOT applied to the malaria target itself).
-    feature_cols = list(WORLD_BANK_INDICATORS.values())
+    # Per-country linear interpolation for small gaps in the World Bank /
+    # climate indicators (slowly-changing or naturally noisy year-to-year
+    # series, so this is a defensible fill -- NOT applied to the malaria
+    # target itself).
+    feature_cols = list(WORLD_BANK_INDICATORS.values()) + list(CLIMATE_FEATURES.values())
     df = df.sort_values(["country_iso3", "year"])
     df[feature_cols] = df.groupby("country_iso3")[feature_cols].transform(lambda s: s.interpolate(limit_direction="both"))
 
@@ -85,8 +115,21 @@ def build() -> tuple[pd.DataFrame, dict]:
             "url": "https://ghoapi.azureedge.net/api/MALARIA_EST_INCIDENCE",
         },
         "features": {
-            name: {"source": "World Bank Open Data", "indicator_code": code}
-            for code, name in WORLD_BANK_INDICATORS.items()
+            **{
+                name: {"source": "World Bank Open Data", "indicator_code": code}
+                for code, name in WORLD_BANK_INDICATORS.items()
+            },
+            **{
+                name: {
+                    "source": "NASA POWER",
+                    "parameter_code": code,
+                    "note": "Queried at each country's capital-city coordinates "
+                            "(see country_coords.py) as a representative point, "
+                            "not averaged across the whole country -- disclosed "
+                            "simplification, not hidden.",
+                }
+                for code, name in CLIMATE_FEATURES.items()
+            },
         },
         "risk_label_methodology": {
             "method": "tertile binning of malaria_incidence within this dataset",

@@ -3,6 +3,7 @@ uvicorn[standard]==0.30.6
 pydantic==2.8.2
 python-dotenv==1.0.1
 psycopg[binary]==3.2.1
+slowapi==0.1.9
 
 # Must match ml/requirements.txt -- the backend unpickles model/encoder/
 # explainer artifacts that were serialized with these exact versions.
