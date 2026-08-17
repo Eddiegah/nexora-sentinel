@@ -328,6 +328,17 @@ export default function Home() {
               </ul>
             </div>
           </div>
+          <p className="mt-8 border-t border-stone-100 pt-6 text-xs text-stone-400">
+            Built by{" "}
+            <a
+              href="https://github.com/Eddiegah"
+              className="font-medium text-stone-600 hover:text-brand-600 hover:underline"
+              target="_blank"
+              rel="noreferrer"
+            >
+              Edmund Eric Gah
+            </a>
+          </p>
         </div>
       </footer>
     </div>

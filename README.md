@@ -2,7 +2,7 @@
 
 Malaria outbreak risk prediction for Africa, trained end-to-end on real public health, demographic, and climate data — no synthetic data, no fabricated metrics. Every number in this README is reproducible by re-running the pipeline in `ml/`.
 
-**Live**: [nexora-sentinel.vercel.app](https://nexora-sentinel.vercel.app) &middot; API: [nexora-sentinel-backend.onrender.com/docs](https://nexora-sentinel-backend.onrender.com/docs)
+**Live**: [nexora-sentinel.vercel.app](https://nexora-sentinel.vercel.app) &middot; API: [nexora-sentinel-backend.onrender.com/docs](https://nexora-sentinel-backend.onrender.com/docs) &middot; Built by [Edmund Eric Gah](https://github.com/Eddiegah)
 
 ## What it does
 
