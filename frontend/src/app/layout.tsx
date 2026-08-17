@@ -35,6 +35,9 @@ export const metadata: Metadata = {
     title: TITLE,
     description: DESCRIPTION,
   },
+  verification: {
+    google: "GBjCM6iatZoQzjQztzEYKt0r36N2OvdV9vrK_BLDbK8",
+  },
 };
 
 const jsonLd = {
