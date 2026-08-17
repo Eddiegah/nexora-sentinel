@@ -25,6 +25,7 @@ export interface PredictResponse {
   requested_year: number;
   data_year_used: number;
   is_hypothetical: boolean;
+  is_forecast: boolean;
   features_used: Record<string, number>;
   predicted_risk: RiskLevel;
   probabilities: Record<RiskLevel, number>;
@@ -39,6 +40,7 @@ export interface HistoryRecord {
   requested_year: number;
   data_year_used: number;
   is_hypothetical: boolean;
+  is_forecast: boolean;
   predicted_risk: RiskLevel;
   probabilities: Record<RiskLevel, number>;
 }
@@ -53,6 +55,7 @@ export interface OverviewEntry {
   country_iso3: string;
   country_name: string;
   year: number;
+  is_forecast: boolean;
   predicted_risk: RiskLevel;
   probabilities: Record<RiskLevel, number>;
 }
@@ -61,4 +64,9 @@ export interface TrendPoint {
   year: number;
   predicted_risk: RiskLevel;
   probabilities: Record<RiskLevel, number>;
+}
+
+export interface SubscribeResponse {
+  message: string;
+  country_name: string;
 }

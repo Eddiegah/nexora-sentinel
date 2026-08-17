@@ -17,3 +17,12 @@ PROCESSED_DATA_CSV = Path(os.getenv("PROCESSED_DATA_CSV", str(BASE_DIR / "data" 
 
 DATABASE_URL = os.getenv("DATABASE_URL", "")
 CORS_ORIGINS = os.getenv("CORS_ORIGINS", "http://localhost:3000").split(",")
+
+# Email alerts (all optional -- alerts silently no-op if RESEND_API_KEY isn't set)
+RESEND_API_KEY = os.getenv("RESEND_API_KEY", "")
+RESEND_FROM_EMAIL = os.getenv("RESEND_FROM_EMAIL", "Nexora Sentinel <onboarding@resend.dev>")
+PUBLIC_BACKEND_URL = os.getenv("PUBLIC_BACKEND_URL", "https://nexora-sentinel-backend.onrender.com")
+PUBLIC_FRONTEND_URL = os.getenv("PUBLIC_FRONTEND_URL", "https://nexora-sentinel.vercel.app")
+# Shared secret required on /alerts/check so only the scheduled GitHub
+# Actions job (or the operator) can trigger real email sends.
+CRON_SECRET = os.getenv("CRON_SECRET", "")

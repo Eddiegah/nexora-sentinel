@@ -20,3 +20,9 @@ services:
         value: /app/ml/artifacts
       - key: PROCESSED_DATA_CSV
         value: /app/data/processed/malaria_africa.csv
+      # Email alerts (all optional -- /alerts endpoints degrade gracefully
+      # without them). Set manually in the Render dashboard.
+      - key: RESEND_API_KEY
+        sync: false
+      - key: CRON_SECRET
+        sync: false

@@ -8,9 +8,9 @@ Malaria outbreak risk prediction for Africa, trained end-to-end on real public h
 
 Given a country and year, Nexora Sentinel predicts a malaria risk class (**Low / Medium / High**) using an XGBoost classifier trained on WHO malaria incidence data, World Bank demographic/infrastructure indicators, and NASA climate data, and explains *why* using SHAP. Three views:
 
-- **Predict** — pick a country/year, get a prediction with a SHAP breakdown. "What-if" overrides let you change individual feature values (e.g. "what if sanitation access improved to 90%?") to see how the prediction shifts.
+- **Predict** — pick a country/year, get a prediction with a SHAP breakdown. "What-if" overrides let you change individual feature values (e.g. "what if sanitation access improved to 90%?") to see how the prediction shifts. Years up to 6 past the real data are supported as disclosed forecasts (see below).
 - **Country Trend** — predicted risk for every year 2000–2024 for one country, showing how risk has actually evolved.
-- **Africa Overview** — predicted risk for all 45 countries at once, sorted by severity.
+- **Africa Overview** — predicted risk for all 45 countries at once (any year, including forecasts), sorted by severity, on an interactive map. Subscribe an email to get alerted if a country's risk reaches High.
 
 ## Data sources
 
@@ -42,10 +42,13 @@ Adding real climate data measurably improved the honest baseline (Logistic Regre
 
 **Explainability is real, not illustrative.** SHAP (TreeExplainer) values are computed against the actual trained model and served per-prediction via the API. `avg_temperature_c` is the single most important feature in the model overall — more important than country identity — which is a real, scientifically grounded result: temperature is a well-established driver of mosquito vector survival and malaria parasite development rate. Summary plot: [`docs/shap_summary.png`](docs/shap_summary.png).
 
+**Forecasting future years is a disclosed linear trend, not a scientific model.** Predictions beyond the real data (2025 onward) extrapolate each demographic/climate feature via a linear fit on that country's own last 10 years of real data, then feed the target year into the same trained XGBoost model. Capped at 6 years past the last real data point per country — most countries that's 2030, but a few (e.g. Mauritius, with only one real data point) have a shorter horizon since their own history doesn't support a longer extrapolation. Every forecast response is explicitly flagged (`is_forecast: true`) and shown in the UI with an amber disclosure — this is not hidden or presented as equivalent to a real prediction.
+
 ### Known limitations, disclosed
 
 - **Climate data is a single representative point per country** (each capital city's coordinates — see [`ml/country_coords.py`](ml/country_coords.py)), not averaged across the whole country. Real climate varies within a country; this is a reasonable, transparent simplification given free, no-key data sources, not a hidden shortcut.
 - Risk tertiles are computed from this dataset's own distribution, not a clinical standard (see above).
+- Future-year predictions are linear-trend extrapolations of demographic/climate inputs, not a demographic or climate forecast model — see above.
 
 ## Architecture
 
@@ -68,7 +71,7 @@ Render instance warm (avoids cold-start spin-down).
 ## Tech stack
 
 - **ML**: pandas, scikit-learn, XGBoost, SHAP
-- **Backend**: FastAPI, psycopg (PostgreSQL), Pydantic, slowapi (rate limiting)
+- **Backend**: FastAPI, psycopg (PostgreSQL), Pydantic, slowapi (rate limiting), Resend (email alerts)
 - **Frontend**: Next.js (App Router), TypeScript, Tailwind CSS
 - **Infra**: Docker Compose (local), Render + Vercel + Neon (deployed), GitHub Actions (keep-alive)
 
@@ -132,16 +135,29 @@ The backend works without a database configured — `/predict` still returns pre
 
 [`.github/workflows/keepalive.yml`](.github/workflows/keepalive.yml) pings `/health` every 10 minutes via GitHub Actions (free, unlimited minutes on public repos) so the free Render instance never cold-starts for a visitor. It's already in this repo and runs automatically once pushed to GitHub — no setup needed. Uses close to the full 750 free instance-hours/month Render allows for one service, so avoid running other free Render web services on the same account alongside this one.
 
+**5. Email alerts (optional)**
+
+The `/alerts` endpoints work without any setup beyond the database — visitors can subscribe, but no email actually sends until you configure:
+
+- Sign up for a free [Resend](https://resend.com) account (3,000 emails/month, no card required) and create an API key.
+- On Render, set `RESEND_API_KEY` (Environment tab) to that key.
+- Pick any secret string and set it as `CRON_SECRET` on Render (Environment tab) *and* as a GitHub Actions repo secret of the same name (repo Settings → Secrets and variables → Actions → New repository secret) — this is what stops random traffic from triggering real email sends via `/alerts/check`.
+- [`.github/workflows/alert-check.yml`](.github/workflows/alert-check.yml) then checks all subscriptions once daily and emails anyone whose country has newly reached High risk (not repeated for every check while it stays High — only on a fresh escalation).
+- Without a verified sending domain, alerts send from Resend's shared `onboarding@resend.dev` address, which is fine for testing but may land in spam for real use; verifying your own domain in Resend removes that.
+
 ## API
 
 | Endpoint | Method | Description |
 |---|---|---|
 | `/health` | GET | API/model/DB status |
 | `/countries` | GET | List of 45 countries with years of available data |
-| `/predict` | POST | Predict risk for a country/year, with optional what-if feature overrides (rate limited: 30/min) |
+| `/predict` | POST | Predict risk for a country/year (real or forecast up to +6 years), with optional what-if feature overrides (rate limited: 30/min) |
 | `/history` | GET | Recent predictions (requires DB) |
-| `/overview` | GET | Predictions for all 45 countries at once (rate limited: 10/min) |
-| `/trend` | GET | Predictions for every year available for one country (rate limited: 30/min) |
+| `/overview` | GET | Predictions for all 45 countries at once, any year (rate limited: 10/min) |
+| `/trend` | GET | Predictions for every real year available for one country (rate limited: 30/min) |
+| `/alerts/subscribe` | POST | Subscribe an email to High-risk alerts for a country (rate limited: 5/min) |
+| `/alerts/unsubscribe` | GET | One-click unsubscribe via the link included in every alert email |
+| `/alerts/check` | POST | Re-checks all subscriptions and sends alert emails; requires `X-Cron-Secret` header, triggered daily by GitHub Actions |
 
 Interactive docs at `http://localhost:8000/docs` once the backend is running (or the live `/docs` link above).
 
@@ -157,12 +173,17 @@ ml/                    Data collection, dataset build, training, SHAP
   explain.py                 Computes real SHAP values
   artifacts/                Trained model, encoders, SHAP explainer (committed)
 backend/                FastAPI service
+  app/data_lookup.py       Real-data lookup + linear-trend forecasting
+  app/alerts.py             Resend email sending
+  app/main.py                All routes, incl. /alerts/*
 frontend/               Next.js dashboard (Predict / Trend / Overview views)
+  src/components/AfricaMap.tsx      Interactive choropleth map
+  src/components/AlertSubscribeForm.tsx  Email alert subscribe form
 data/processed/         Cleaned dataset + methodology.json
 docs/                   metrics.json, shap_summary.png
 docker-compose.yml
 render.yaml             Render Blueprint (backend web service)
-.github/workflows/      Keep-alive ping
+.github/workflows/      Keep-alive ping + daily alert check
 ```
 
 ## License

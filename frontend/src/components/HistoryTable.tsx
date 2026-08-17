@@ -34,7 +34,9 @@ export default function HistoryTable({ records }: { records: HistoryRecord[] }) 
               <td className="px-4 py-2 tabular-nums text-stone-600">
                 {(r.probabilities[r.predicted_risk] * 100).toFixed(1)}%
               </td>
-              <td className="px-4 py-2 text-stone-500">{r.is_hypothetical ? "What-if" : "Historical"}</td>
+              <td className="px-4 py-2 text-stone-500">
+                {r.is_forecast ? "Forecast" : r.is_hypothetical ? "What-if" : "Historical"}
+              </td>
               <td className="px-4 py-2 text-stone-400">{new Date(r.created_at).toLocaleString()}</td>
             </tr>
           ))}

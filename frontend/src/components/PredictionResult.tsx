@@ -34,10 +34,17 @@ export default function PredictionResult({ result }: { result: PredictResponse }
           <h3 className="text-lg font-semibold text-stone-900">
             {result.country_name} &mdash; {result.requested_year}
           </h3>
-          {result.data_year_used !== result.requested_year && (
-            <p className="text-xs text-stone-500">
-              No data for {result.requested_year}; using nearest available year ({result.data_year_used}).
+          {result.is_forecast ? (
+            <p className="text-xs font-medium text-amber-600">
+              Forecast: inputs extrapolated from a linear trend fit on real data through{" "}
+              {result.data_year_used} &mdash; not recorded data for {result.requested_year}.
             </p>
+          ) : (
+            result.data_year_used !== result.requested_year && (
+              <p className="text-xs text-stone-500">
+                No data for {result.requested_year}; using nearest available year ({result.data_year_used}).
+              </p>
+            )
           )}
           {result.is_hypothetical && (
             <p className="text-xs font-medium text-brand-600">What-if scenario (some inputs overridden)</p>

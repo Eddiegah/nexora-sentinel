@@ -3,6 +3,9 @@
 import { useMemo, useState } from "react";
 import type { Country, PredictRequest } from "@/lib/types";
 
+// Matches the backend's FORECAST_MAX_HORIZON in data_lookup.py.
+const FORECAST_MAX_HORIZON = 6;
+
 const OVERRIDE_FIELDS: { key: keyof PredictRequest; label: string }[] = [
   { key: "urban_population_pct", label: "Urban population (%)" },
   { key: "rural_population_pct", label: "Rural population (%)" },
@@ -32,6 +35,14 @@ export default function PredictionForm({
     () => countries.find((c) => c.iso3 === countryIso3),
     [countries, countryIso3],
   );
+
+  const yearOptions = useMemo(() => {
+    const real = selectedCountry?.years_available ?? [];
+    if (real.length === 0) return [];
+    const lastReal = real[real.length - 1];
+    const forecastYears = Array.from({ length: FORECAST_MAX_HORIZON }, (_, i) => lastReal + i + 1);
+    return [...real.map((y) => ({ year: y, forecast: false })), ...forecastYears.map((y) => ({ year: y, forecast: true }))];
+  }, [selectedCountry]);
 
   function handleCountryChange(iso3: string) {
     setCountryIso3(iso3);
@@ -67,9 +78,10 @@ export default function PredictionForm({
         <label className="block">
           <span className="mb-1 block text-sm font-medium text-stone-700">Year</span>
           <select value={year} onChange={(e) => setYear(Number(e.target.value))} className={inputClass}>
-            {(selectedCountry?.years_available ?? []).map((y) => (
+            {yearOptions.map(({ year: y, forecast }) => (
               <option key={y} value={y}>
                 {y}
+                {forecast ? " (forecast)" : ""}
               </option>
             ))}
           </select>

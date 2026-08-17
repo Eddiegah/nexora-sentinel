@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
 
 
 class PredictRequest(BaseModel):
@@ -24,6 +24,7 @@ class PredictResponse(BaseModel):
     requested_year: int
     data_year_used: int
     is_hypothetical: bool
+    is_forecast: bool
     features_used: dict[str, float]
     predicted_risk: str
     probabilities: dict[str, float]
@@ -44,6 +45,7 @@ class HistoryRecord(BaseModel):
     requested_year: int
     data_year_used: int
     is_hypothetical: bool
+    is_forecast: bool = False
     predicted_risk: str
     probabilities: dict[str, float]
 
@@ -58,6 +60,7 @@ class OverviewEntry(BaseModel):
     country_iso3: str
     country_name: str
     year: int
+    is_forecast: bool
     predicted_risk: str
     probabilities: dict[str, float]
 
@@ -66,3 +69,13 @@ class TrendPoint(BaseModel):
     year: int
     predicted_risk: str
     probabilities: dict[str, float]
+
+
+class SubscribeRequest(BaseModel):
+    email: EmailStr
+    country_iso3: str
+
+
+class SubscribeResponse(BaseModel):
+    message: str
+    country_name: str

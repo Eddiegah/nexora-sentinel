@@ -1,0 +1,29 @@
+name: Check malaria risk alerts
+
+on:
+  schedule:
+    # Once daily -- underlying predictions are based on annual data, so
+    # checking more often wouldn't surface anything new.
+    - cron: "0 8 * * *"
+  workflow_dispatch: {}
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger /alerts/check
+        run: |
+          if [ -z "${{ secrets.CRON_SECRET }}" ]; then
+            echo "::warning::CRON_SECRET repo secret is not set -- skipping. Add it in Settings > Secrets and variables > Actions, matching the CRON_SECRET env var set on Render."
+            exit 0
+          fi
+          response=$(curl -s -w "\n%{http_code}" -X POST \
+            -H "X-Cron-Secret: ${{ secrets.CRON_SECRET }}" \
+            --max-time 60 \
+            https://nexora-sentinel-backend.onrender.com/alerts/check)
+          status=$(echo "$response" | tail -n1)
+          body=$(echo "$response" | sed '$d')
+          echo "HTTP $status: $body"
+          if [ "$status" != "200" ]; then
+            echo "::warning::Alert check did not return 200 (got $status)."
+          fi

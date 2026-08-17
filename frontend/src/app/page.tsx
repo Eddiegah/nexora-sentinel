@@ -19,6 +19,7 @@ import OverviewGrid from "@/components/OverviewGrid";
 import AfricaMap from "@/components/AfricaMap";
 import StatCounter from "@/components/StatCounter";
 import Skeleton from "@/components/Skeleton";
+import AlertSubscribeForm from "@/components/AlertSubscribeForm";
 
 type View = "predict" | "trend" | "overview";
 
@@ -26,6 +27,13 @@ const TABS: { key: View; label: string; icon: string }[] = [
   { key: "predict", label: "Predict", icon: "M13 10V3L4 14h7v7l9-11h-7z" },
   { key: "trend", label: "Country Trend", icon: "M3 3v18h18M7 14l4-4 4 4 5-6" },
   { key: "overview", label: "Africa Overview", icon: "M3.6 9h16.8M3.6 15h16.8M12 3a15 15 0 010 18M12 3a15 15 0 000 18" },
+];
+
+// 2015-2024 real years plus up to 6 forecast years, matching the backend's
+// FORECAST_MAX_HORIZON.
+const OVERVIEW_YEAR_OPTIONS = [
+  ...Array.from({ length: 10 }, (_, i) => ({ year: 2015 + i, forecast: false })),
+  ...Array.from({ length: 6 }, (_, i) => ({ year: 2025 + i, forecast: true })),
 ];
 
 export default function Home() {
@@ -44,6 +52,7 @@ export default function Home() {
 
   const [overview, setOverview] = useState<OverviewEntry[] | null>(null);
   const [overviewLoading, setOverviewLoading] = useState(false);
+  const [overviewYear, setOverviewYear] = useState(2024);
 
   useEffect(() => {
     api.getHealth().then(setHealth).catch(() => setHealth(null));
@@ -69,15 +78,15 @@ export default function Home() {
   }, [view, trendCountry]);
 
   useEffect(() => {
-    if (view === "overview" && overview === null) {
+    if (view === "overview") {
       setOverviewLoading(true);
       api
-        .getOverview(2024)
+        .getOverview(overviewYear)
         .then(setOverview)
         .catch(() => setOverview([]))
         .finally(() => setOverviewLoading(false));
     }
-  }, [view, overview]);
+  }, [view, overviewYear]);
 
   async function handlePredict(req: PredictRequest) {
     setLoading(true);
@@ -150,8 +159,8 @@ export default function Home() {
         </div>
       </header>
 
-      {/* Floating nav */}
-      <div className="mx-auto -mt-6 max-w-6xl px-6">
+      {/* Nav */}
+      <div className="mx-auto max-w-6xl px-6 pt-6">
         <nav className="flex gap-1 rounded-2xl border border-stone-200 bg-white p-1.5 shadow-lg shadow-stone-900/5">
           {TABS.map((t) => (
             <button
@@ -228,6 +237,31 @@ export default function Home() {
 
         {view === "overview" && (
           <div key="overview" className="animate-fade-up space-y-8">
+            <div className="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm">
+              <label className="block max-w-xs">
+                <span className="mb-1 block text-sm font-medium text-stone-700">Year</span>
+                <select
+                  value={overviewYear}
+                  onChange={(e) => setOverviewYear(Number(e.target.value))}
+                  className="w-full rounded-lg border border-stone-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+                >
+                  {OVERVIEW_YEAR_OPTIONS.map(({ year: y, forecast }) => (
+                    <option key={y} value={y}>
+                      {y}
+                      {forecast ? " (forecast)" : ""}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              {overview && overview.filter((e) => e.is_forecast).length > 0 && (
+                <p className="mt-2 text-xs text-amber-600">
+                  {overview.every((e) => e.is_forecast)
+                    ? `Showing forecasted risk for all countries: inputs extrapolated from each country's recent trend, not recorded ${overviewYear} data.`
+                    : `${overview.filter((e) => e.is_forecast).length} of ${overview.length} countries are showing forecasted risk (their real data doesn't extend to ${overviewYear}); the rest show real recorded ${overviewYear} data.`}
+                </p>
+              )}
+            </div>
+
             {overviewLoading && (
               <>
                 <Skeleton className="h-[500px] w-full" />
@@ -241,6 +275,7 @@ export default function Home() {
                   Click any country to see its full risk trend, 2000&ndash;2024.
                 </p>
                 <OverviewGrid entries={overview} onSelectCountry={goToTrend} />
+                {countries.length > 0 && <AlertSubscribeForm countries={countries} />}
               </>
             )}
           </div>

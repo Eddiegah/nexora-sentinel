@@ -24,6 +24,10 @@ services:
       CORS_ORIGINS: http://localhost:3000
       ML_ARTIFACTS_DIR: /app/ml/artifacts
       PROCESSED_DATA_CSV: /app/data/processed/malaria_africa.csv
+      # Optional -- set in your shell before `docker compose up` to test
+      # email alerts locally; left unset, /alerts endpoints just no-op.
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      CRON_SECRET: ${CRON_SECRET:-}
     ports:
       - "8000:8000"
     depends_on:
