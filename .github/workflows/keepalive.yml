@@ -3,7 +3,12 @@ name: Keep backend warm
 on:
   schedule:
     # Every 10 minutes -- comfortably under Render's 15-minute free-tier
-    # idle spin-down, so the backend never cold-starts for a visitor.
+    # idle spin-down. In practice GitHub delays scheduled workflows on
+    # free/personal repos well beyond the configured interval (observed
+    # gaps of 20-40 minutes here, not 10), so a full cold start is the
+    # normal case for this job, not an edge case -- the timeout below
+    # has to survive waking a sleeping instance (measured: ~45s), not
+    # just pinging an already-warm one.
     - cron: "*/10 * * * *"
   workflow_dispatch: {}
 
@@ -13,7 +18,7 @@ jobs:
     steps:
       - name: Ping backend health endpoint
         run: |
-          status=$(curl -s -o /dev/null -w "%{http_code}" --max-time 30 https://nexora-sentinel-backend.onrender.com/health)
+          status=$(curl -s -o /dev/null -w "%{http_code}" --max-time 90 https://nexora-sentinel-backend.onrender.com/health || echo "000")
           echo "Health check returned HTTP $status"
           if [ "$status" != "200" ]; then
             echo "::warning::Backend health check did not return 200 (got $status) -- may be cold-starting or down."
